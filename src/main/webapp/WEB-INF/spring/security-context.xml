@@ -1,0 +1,59 @@
+<?xml version= "1.0" encoding= "UTF-8"?>
+<beans:beans xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+       			http://www.springframework.org/schema/beans/spring-beans.xsd
+       			http://www.springframework.org/schema/security
+       			http://www.springframework.org/schema/security/spring-security.xsd">
+
+	<http pattern="/resources/public/**" security="none"/>
+    <http pattern="/resources/login/**" security="none"/>
+    <http pattern="/loginpage" security="none"/>
+    <http pattern="/registration*" security="none"/>
+    <http pattern="/favicon.ico" security="none"/>
+
+	<global-method-security jsr250-annotations="enabled"
+                            pre-post-annotations="enabled"
+                            secured-annotations="enabled"/>
+
+	<http auto-config="true" use-expressions="true">
+
+		<intercept-url pattern="/security/**" access="hasRole('ADMIN')"/>
+		<intercept-url pattern="/**" access="isAnonymous()" method="OPTIONS"/>
+        <intercept-url pattern="/forgot_password" access="isAnonymous()"/>
+        <intercept-url pattern="/**" access="isAuthenticated()"/>
+        <intercept-url pattern="/admin/**" access="hasRole('ROLE_ADMIN')"/>
+
+		<form-login login-page="/login.html" username-parameter="j_username"
+			password-parameter="j_password" login-processing-url="/j_spring_security_check"
+			authentication-failure-url="/login.html?error=true" />
+
+		<logout logout-url="/j_spring_security_logout"
+			logout-success-url="/" />
+
+		<!--Save logged user in cookie with name key='name' -->
+		<remember-me
+                user-service-ref="authorizationService"
+                token-validity-seconds="1209600"
+                remember-me-parameter="remember-me"
+                token-repository-ref="persistentTokenRepository"/>
+
+		<csrf disabled="true" />
+
+	</http>
+	
+	<beans:bean id="authorizationService" class="ru.realty.spring.service.AuthorizationService"/>
+
+	<authentication-manager>
+        <authentication-provider user-service-ref="authorizationService">
+            <password-encoder hash="bcrypt"/>
+        </authentication-provider>
+    </authentication-manager>
+    
+    <beans:bean id="persistentTokenRepository"
+                class="org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl">
+        <beans:property name="dataSource" ref="dataSource"/>
+    </beans:bean>
+
+
+</beans:beans>
